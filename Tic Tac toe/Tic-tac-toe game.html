@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+      justify-content: center;
+      margin: 20px auto;
+      position: relative;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 2px solid #000;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .cell.taken {
+      cursor: not-allowed;
+    }
+    #message {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    .hidden {
+      display: none;
+    }
+    .line {
+      position: absolute;
+      background-color: red;
+      height: 5px;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe</h1>
+  <div id="message">Do you want to play first?</div>
+  <button id="yes">Yes</button>
+  <button id="no">No</button>
+  <div id="board"></div>
+
+  <script>
+    const board = Array(9).fill(null);
+    const winningCombinations = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6]
+    ];
+    const corners = [0, 2, 6, 8];
+
+    let playerSymbol = "X", computerSymbol = "O", isPlayerTurn;
+
+    const playerImage = "o image.png"; // Replace with the player's image
+    const computerImage = "X image.png"; // Replace with the computer's image
+
+    const boardElement = document.getElementById("board");
+    const messageElement = document.getElementById("message");
+    const yesButton = document.getElementById("yes");
+    const noButton = document.getElementById("no");
+
+    function createBoard() {
+      boardElement.innerHTML = "";
+      board.forEach((cell, index) => {
+        const cellElement = document.createElement("div");
+        cellElement.classList.add("cell");
+        if (cell) {
+          cellElement.classList.add("taken");
+          const img = document.createElement("img");
+          img.src = cell === playerSymbol ? playerImage : computerImage;
+          img.alt = cell;
+          img.style.width = "80%";
+          cellElement.appendChild(img);
+        }
+        cellElement.addEventListener("click", () => makeMove(index));
+        boardElement.appendChild(cellElement);
+      });
+    }
+
+    function checkWinner(symbol) {
+      for (const combination of winningCombinations) {
+        if (combination.every(index => board[index] === symbol)) {
+          
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function isBoardFull() {
+      return board.every(cell => cell !== null);
+    }
+
+    function findBestMove() {
+      // Block the player's winning move or find the winning move for the computer
+      for (const combo of winningCombinations) {
+        const [a, b, c] = combo;
+        const values = [board[a], board[b], board[c]];
+        if (values.filter(val => val === computerSymbol).length === 2 && values.includes(null)) {
+          return combo[values.indexOf(null)];
+        }
+        if (values.filter(val => val === playerSymbol).length === 2 && values.includes(null)) {
+          return combo[values.indexOf(null)];
+        }
+      }
+      // Take a corner if available
+      for (const corner of corners) {
+        if (board[corner] === null) return corner;
+      }
+      // Take the center if available
+      if (board[4] === null) return 4;
+      // Take any remaining space
+      return board.findIndex(cell => cell === null);
+    }
+
+
+
+
+    function computerMove() {
+      const move = findBestMove();
+      board[move] = computerSymbol;
+      createBoard();
+      if (checkWinner(computerSymbol)) {
+        setTimeout(() => {
+          if (confirm("Computer wins! Do you want to play again?")) restartGame();
+        }, 200);
+        return;
+      }
+      if (isBoardFull()) {
+        setTimeout(() => {
+          if (confirm("It's a draw! Do you want to play again?")) restartGame();
+        }, 200);
+        return;
+      }
+      isPlayerTurn = true;
+      messageElement.textContent = "Your turn!";
+    }
+
+    function makeMove(index) {
+      if (board[index] || !isPlayerTurn) return;
+      board[index] = playerSymbol;
+      createBoard();
+      if (checkWinner(playerSymbol)) {
+        setTimeout(() => {
+          if (confirm("You win! Do you want to play again?")) restartGame();
+        }, 200);
+        return;
+      }
+      if (isBoardFull()) {
+        setTimeout(() => {
+          if (confirm("It's a draw! Do you want to play again?")) restartGame();
+        }, 200);
+        return;
+      }
+      isPlayerTurn = false;
+      messageElement.textContent = "Computer's turn...";
+      setTimeout(computerMove, 500);
+    }
+
+    function restartGame() {
+      board.fill(null);
+      createBoard();
+      messageElement.textContent = "Do you want to play first?";
+      yesButton.classList.remove("hidden");
+      noButton.classList.remove("hidden");
+    }
+
+    yesButton.addEventListener("click", () => {
+      isPlayerTurn = true;
+      messageElement.textContent = "Your turn!";
+      yesButton.classList.add("hidden");
+      noButton.classList.add("hidden");
+      createBoard();
+    });
+
+    noButton.addEventListener("click", () => {
+      isPlayerTurn = false;
+      messageElement.textContent = "Computer's turn...";
+      yesButton.classList.add("hidden");
+      noButton.classList.add("hidden");
+      createBoard();
+      setTimeout(computerMove, 500);
+    });
+
+    createBoard();
+  </script>
+</body>
+</html>
